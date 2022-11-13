@@ -6,8 +6,8 @@ import scipy as sc
 
 
 # Ideal Gas Properties Table
-gas_prop_table_1 = open('ideal_gas_prop.csv')
-gas_prop_table_2 = np.loadtxt(gas_prop_table_1, delimiter = ' ')
+gas_prop_table_csv = open('ideal_gas_prop.csv')
+gas_prop_table_array = np.loadtxt(gas_prop_table_csv, delimiter = ' ')
 
 t = 0
 h = 1
@@ -15,8 +15,8 @@ p = 2
 
 def table_interp(val1, col_from, col_to):
 
-    table_from = gas_prop_table_2[:, col_from]
-    table_to = gas_prop_table_2[:, col_to]
+    table_from = gas_prop_table_array[:, col_from]
+    table_to = gas_prop_table_array[:, col_to]
     
     index = np.argmax(table_from >= val1)
     ratio = (val1 - table_from[index - 1]) / (table_from[index] - table_from[index - 1])
@@ -89,51 +89,42 @@ def calc():
     data = np.array([t_1, h_1, p_1, t_2, h_2, p_2, p_2r, w_2, q_fuel_actual, t_3, h_3, p_3r, t_4, h_4, p_4r, w_4, f_thrust])
     return data
 
-# Output
-'''
-print("Pressure required by compressor: ", round(p_2, 2), "kPa")
-print("Temperature required by compressor: ", round(t_2, 2), "K")
-print("Power required by compressor: ", round(w_2, 2), "kW")
-print("Energy provided by fuel (combustor): ", round(q_fuel_actual, 2), "kJ")
-print("Temperature at exit of combustor: ", round(t_3, 2), "K")
-print("Work done by turbine: ", round(w_4, 2), "kW")
-print("Thrust:", round(f_thrust, 2), "N")
-'''
-
 # Monte Carlo Simulations
 
 # Inputs
-num_simulations = 1
 num_runs = 10000
 
 # Tracking
+t3_data = np.zeros(shape = (num_runs))
+tracker_run_data = np.zeros(shape = (num_runs, len(calc())))
+data_row, data_col = tracker_run_data.shape
 
-tracker_sim_data = np.zeros(shape = (num_simulations, len(calc())))
-t3_data = np.zeros(shape = (num_simulations, num_runs))
+# Runs
+for i in range(num_runs):
+    data = calc()
+    tracker_run_data[i] = data
 
-# Simulations
-for i in range(num_simulations):
-    tracker_run_total = np.zeros(shape = len(calc()))
-    tracker_run_data = np.zeros(shape = (num_runs, len(calc())))
-    # Runs
-    for j in range(num_runs):
-        data = calc()
-        new = np.zeros(shape = len(data))
-        for k in range(len(data)):
-            cur = tracker_run_total[k]
-            new[k] = (cur * j + data[k]) / (j + 1)
-        tracker_run_data[j] = new
-        tracker_run_total = new
-    # Simulation data
-    tracker_sim_data[i] = tracker_run_total
-    # Specific metric data
-    t3_data[i] = tracker_run_data[:, 9] 
+# Averages
+output_mean = np.zeros(shape = (data_col))
+#a = tracker_run_data[:, 9]
 
+for i in range(data_col):
+    a = tracker_run_data[:, i]
+    output_mean[i] = np.mean(a)
 
 # Plot output
 
-print(tracker_sim_data)
+print(output_mean)
 
 plt.xlim(0, num_runs)
-plt.plot(t3_data[0])
+plt.plot(t3_data)
 plt.show()
+
+#TODO
+# isentropic efficiency of compressor and turbine
+# Model the pressure drop through the engine appropriately
+# pressure drop -> more shaft power
+# Checking Compressor needs is less than what the turbine provides (Power differential condition)
+# What is this Exhaust gas power output (kW)	21.7
+# check missing specs in the calculation
+# compressor combuster turbine and nozzle (missing) 
