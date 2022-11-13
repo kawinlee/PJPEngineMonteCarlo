@@ -120,11 +120,25 @@ plt.xlim(0, num_runs)
 plt.plot(t3_data)
 plt.show()
 
-#TODO
-# isentropic efficiency of compressor and turbine
-# Model the pressure drop through the engine appropriately
-# pressure drop -> more shaft power
-# Checking Compressor needs is less than what the turbine provides (Power differential condition)
-# What is this Exhaust gas power output (kW)	21.7
-# check missing specs in the calculation
-# compressor combuster turbine and nozzle (missing) 
+'''
+ isentropic efficiency of compressor and turbine
+ Model the pressure drop through the engine appropriately
+ pressure drop -> more shaft power
+ Checking Compressor needs is less than what the turbine provides (Power differential condition)
+ What is this Exhaust gas power output (kW)	21.7
+ check missing specs in the calculation
+ compressor combuster turbine and nozzle (missing) 
+'''
+
+
+'''
+git fetch
+git reset --hard HEAD
+git merge origin/main
+
+commit 
+git add .
+git commit -m "<PUT MESSAGE HERE>"
+git push 
+
+'''
