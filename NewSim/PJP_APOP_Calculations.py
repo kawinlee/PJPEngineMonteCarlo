@@ -9,7 +9,7 @@ import scipy as sc
 gas_prop_table_csv = open('ideal_gas_prop.csv')
 gas_prop_table_array = np.loadtxt(gas_prop_table_csv, delimiter = ' ')
 
-t = 0
+t = 0 #temperature is the first column, enthalpy is second, pr is third
 h = 1
 p = 2
 
@@ -39,6 +39,7 @@ def calc():
     exitExhaustTempMaxLB = 480 #deg 
     exitExhaustTempMaxUB = 720 #deg 
     pressureRatio_compressor = 2.9
+    eff_compressor = 0.8 #ESTIMATE as of 11.28.22
     m_air = 0.23 #kg/s, air mass flow rate
 
     # Atmospheric condition inputs
@@ -54,39 +55,51 @@ def calc():
     # eff_combustion = 0.9
     eff_combustion = np.random.normal(0.7, 0.1)
 
-    # Atmosphere, 1
-    t_1 = t_atm
-    p_1 = p_atm
-    h_1 = table_interp(t_1, t, h)
+    # Atmosphere, S0
+    # temp and pressure at s1 (station 1), ideal gas assumption
+    t_0 = t_atm
+    p_0 = p_atm
+    h_0 = table_interp(t_0, t, h)
 
-    # Post compressor, 2 (assume isentropic)
-    p_2 = pressureRatio_compressor * p_1
-    p_2r = pressureRatio_compressor * table_interp(t_1, t, p)
-    t_2 = table_interp(p_2r, p, t)
-    h_2 = table_interp(t_2, t, h)
-    w_2 = m_air * (h_2 - h_1)
+    # Diffuser, S1
+    # Assume no engine diffuser
 
+    # Compressor Inlet, S2
+    # Conditions t,p,h are the same here as S0
+
+    # Post compressor, S3
+    # Isentropic Assumption
+    p_3 = pressureRatio_compressor * p_0
+    p_3r = pressureRatio_compressor * table_interp(t_0, t, p)
+    t_3 = table_interp(p_3r, p, t)
+    h_3 = table_interp(t_3, t, h)
+    w_3 = m_air * (h_3 - h_0)
+    # Non - isentropic
+    h_3a = h_0 + (h_3 - h_0)/eff_compressor
+    
+
+    # Post combustor, S4
     # Energy provided by fuel (kJ)
     m_fuel = d_kerosene * maxFuelFlow / 1000 / 60 #kg/s, fuel mass flow rate
     q_fuel_ideal = m_fuel * LHV_kerosene * 1000 # kJ
     q_fuel_actual = eff_combustion * q_fuel_ideal #kJ
+    # No Pressure Loss Assumption
+    h_4 = (q_fuel_actual / m_air) + h_3
+    t_4 = table_interp(h_4, h, t)
+    p_4r = table_interp(t_4, t, p)
 
-    # Post combustor, 3
-    h_3 = (q_fuel_actual / m_air) + h_2
-    t_3 = table_interp(h_3, h, t)
-    p_3r = table_interp(t_3, t, p)
-
-    # Post turbine, 4 (assume isentropic, p = p_atm)
-    p_4r = p_3r / pressureRatio_compressor
-    t_4 = table_interp(p_4r, p, t)
-    h_4 = table_interp(t_4, t, h)
-    w_4 = m_air * (h_3 - h_4)
+    # Post turbine, S5 
+    # Isentropic assumption, pressure drop to p_0
+    p_5r = p_4r / pressureRatio_compressor
+    t_5 = table_interp(p_5r, p, t)
+    h_5 = table_interp(t_5, t, h)
+    w_5 = m_air * (h_4 - h_5)
 
     # Thrust
     f_thrust = m_air * ((v_out - v_in) * 1000 / 3600)
 
     # Output
-    data = np.array([t_1, h_1, p_1, t_2, h_2, p_2, p_2r, w_2, q_fuel_actual, t_3, h_3, p_3r, t_4, h_4, p_4r, w_4, f_thrust])
+    data = np.array([t_0, h_0, p_0, t_3, h_3, p_3, p_3r, w_3, q_fuel_actual, t_4, h_4, p_4r, t_5, h_5, p_5r, w_5, f_thrust])
     return data
 
 # Monte Carlo Simulations
