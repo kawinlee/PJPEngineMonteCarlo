@@ -1,0 +1,8 @@
+free_stream		0
+inlet			1
+inlet_compressor	2
+inlet_combustor	3
+outlet_combustor	4
+outlet_turbine	5
+nozzle_exitplane	9
+
