@@ -38,8 +38,11 @@ def calc():
     v_out = 1560 #km/hr
     exitExhaustTempMaxLB = 480 #deg 
     exitExhaustTempMaxUB = 720 #deg 
-    pressureRatio_compressor = 2.9
+    pressureRatio_compressor = 2.9 #unitless, from jetcat data
+    pressureRatio_combustor = 0.93 #unitless, from okstate data
+    pressureRatio_turbine = 1 #unitless, estimate
     eff_compressor = 0.8 #ESTIMATE as of 11.28.22
+    eff_turbine = 1 #ESTIMATE as of 11.28.22
     m_air = 0.23 #kg/s, air mass flow rate
 
     # Atmospheric condition inputs
@@ -70,42 +73,56 @@ def calc():
     # Post compressor, S3
     # Isentropic Assumption
     p_3 = pressureRatio_compressor * p_0
-    p_3r = pressureRatio_compressor * table_interp(t_0, t, p)
-    t_3 = table_interp(p_3r, p, t)
-    h_3 = table_interp(t_3, t, h)
-    w_3 = m_air * (h_3 - h_0)
+    pr_3 = pressureRatio_compressor * table_interp(t_0, t, p)
+    t_3i = table_interp(pr_3, p, t)
+    h_3i = table_interp(t_3i, t, h)
+    w_ci = m_air * (h_3i - h_0)
     # Non - isentropic
-    h_3a = h_0 + (h_3 - h_0)/eff_compressor
-    
+    h_3a = h_0 + (h_3i - h_0)/eff_compressor #calculates h_3a "actual" enthalpy at S3
+    t_3a = table_interp(h_3a, h, t) #interps h_3a into temperature
+    w_ca = m_air * (h_3a - h_0) #calculates actual power req'd
 
     # Post combustor, S4
     # Energy provided by fuel (kJ)
     m_fuel = d_kerosene * maxFuelFlow / 1000 / 60 #kg/s, fuel mass flow rate
     q_fuel_ideal = m_fuel * LHV_kerosene * 1000 # kJ
     q_fuel_actual = eff_combustion * q_fuel_ideal #kJ
-    # No Pressure Loss Assumption
-    h_4 = (q_fuel_actual / m_air) + h_3
-    t_4 = table_interp(h_4, h, t)
-    p_4r = table_interp(t_4, t, p)
+    # ideal
+    h_4i = (q_fuel_actual / m_air) + h_3i
+    t_4i = table_interp(h_4i, h, t)
+    pr_4i = table_interp(t_4i, t, p)
+    # actual
+    h_4a = (q_fuel_actual / m_air) + h_3a
+    t_4a = table_interp(h_4a, h, t)
+    pr_4a = table_interp(t_4a, t, p)
+
 
     # Post turbine, S5 
-    # Isentropic assumption, pressure drop to p_0
-    p_5r = p_4r / pressureRatio_compressor
-    t_5 = table_interp(p_5r, p, t)
-    h_5 = table_interp(t_5, t, h)
-    w_5 = m_air * (h_4 - h_5)
+    # Isentropic (ideal) assumption
+    # Assume no pressure losses in combustor
+    pr_5i = pr_4i / pressureRatio_turbine #what is okstate "power balance"?
+    t_5i = table_interp(pr_5i, p, t)
+    h_5i = table_interp(t_5i, t, h)
+    w_ti = m_air * (h_4i - h_5i)
+    # actual
+    pr_5a = pr_4a / pressureRatio_turbine #what is okstate "power balance"?
+    t_5a = table_interp(pr_5a, p, t)
+    h_5a = h_4a - eff_turbine(h_4a - h_5i)
+    w_ta = m_air * (h_4a - h_5a)
 
     # Thrust
     f_thrust = m_air * ((v_out - v_in) * 1000 / 3600)
 
     # Output
-    data = np.array([t_0, h_0, p_0, t_3, h_3, p_3, p_3r, w_3, q_fuel_actual, t_4, h_4, p_4r, t_5, h_5, p_5r, w_5, f_thrust])
+    data = np.array([t_0, h_0, p_0, t_3i, h_3i, p_3, pr_3, w_ci, q_fuel_actual, t_4i, h_4i, pr_4i, t_5i, h_5i, pr_5i, w_ti, f_thrust])
+    data1 = np.array([t_3i, h_3i, w_ci, t_3a, h_3a, w_ca])
+    print(data1)
     return data
 
 # Monte Carlo Simulations
 
 # Inputs
-num_runs = 10000
+num_runs = 1
 
 # Tracking
 t3_data = np.zeros(shape = (num_runs))
