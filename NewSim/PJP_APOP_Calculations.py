@@ -2,7 +2,7 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sc
-
+import math
 
 
 # Ideal Gas Properties Table
@@ -40,9 +40,9 @@ def calc():
     exitExhaustTempMaxUB = 720 #deg 
     pressureRatio_compressor = 2.9 #unitless, from jetcat data
     pressureRatio_combustor = 0.93 #unitless, from okstate data
-    pressureRatio_turbine = 1 #unitless, estimate
-    eff_compressor = 0.8 #ESTIMATE as of 11.28.22
-    eff_turbine = 1 #ESTIMATE as of 11.28.22
+    pressureRatio_turbine = 0.64 #unitless, estimate
+    eff_compressor = 0.75 #ESTIMATE as of 11.28.22
+    eff_turbine = 0.75 #ESTIMATE as of 11.28.22
     m_air = 0.23 #kg/s, air mass flow rate
 
     # Atmospheric condition inputs
@@ -95,7 +95,7 @@ def calc():
     h_4a = (q_fuel_actual / m_air) + h_3a
     t_4a = table_interp(h_4a, h, t)
     pr_4a = table_interp(t_4a, t, p)
-
+    p_4 = p_3 * pressureRatio_combustor
 
     # Post turbine, S5 
     # Isentropic (ideal) assumption
@@ -107,11 +107,22 @@ def calc():
     # actual
     pr_5a = pr_4a / pressureRatio_turbine #what is okstate "power balance"?
     t_5a = table_interp(pr_5a, p, t)
-    h_5a = h_4a - eff_turbine(h_4a - h_5i)
+    h_5a = h_4a - eff_turbine * (h_4a - h_5i)
     w_ta = m_air * (h_4a - h_5a)
+    p_5 = p_4 * pressureRatio_turbine
+
+    # Nozzle
+    # Currently not calculating ideal case for simplicity
+    # Perfect expansion assumption
+    p_9 = p_0
+    pr_9a = (p_9/p_5) * pr_5a #pressure ratio is the difference between p5 and p0
+    h_9a = table_interp(pr_9a,p,h)
+    v_9 = math.sqrt(2000 * (h_5a - h_9a))
 
     # Thrust
     f_thrust = m_air * ((v_out - v_in) * 1000 / 3600)
+    f_actual = m_air * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
+    print(f_thrust, f_actual)
 
     # Output
     data = np.array([t_0, h_0, p_0, t_3i, h_3i, p_3, pr_3, w_ci, q_fuel_actual, t_4i, h_4i, pr_4i, t_5i, h_5i, pr_5i, w_ti, f_thrust])
