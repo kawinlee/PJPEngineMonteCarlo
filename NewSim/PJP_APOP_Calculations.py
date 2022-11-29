@@ -32,27 +32,24 @@ def table_interp(val1, col_from, col_to):
 def calc():
 
     # Input variables
-    maxFuelFlow = 390 #ml/min
-    Tmax = 100 # Newtons from max fuel flow
-    v_in = 0 #km/hr, velocity in
-    v_out = 1560 #km/hr
-    exitExhaustTempMaxLB = 480 #deg 
-    exitExhaustTempMaxUB = 720 #deg 
-    pressureRatio_compressor = 2.9 #unitless, from jetcat data
-    pressureRatio_combustor = 0.93 #unitless, from okstate data
-    pressureRatio_turbine = 0.64 #unitless, estimate
-    eff_compressor = 0.75 #ESTIMATE as of 11.28.22
-    eff_turbine = 0.75 #ESTIMATE as of 11.28.22
-    m_air = 0.23 #kg/s, air mass flow rate
+    maxFuelFlow = 390               #ml/min, jetcat data
+    v_in = 0                        #km/hr, static test condition
+    v_out = 1560                    #km/hr, jetcat data
+    pressureRatio_compressor = 2.9  #unitless, jetcat data
+    pressureRatio_combustor = 0.93  #unitless, okstate data
+    pressureRatio_turbine = 0.64    #unitless, okstate data
+    eff_compressor = 0.75           #ESTIMATE as of 11.28.22
+    eff_turbine = 0.75              #ESTIMATE as of 11.28.22
+    m_air = 0.23                    #kg/s, jetcat data
 
     # Atmospheric condition inputs
-    t_atm = 300 #k, atmospheric temperature
-    p_atm = 101.3 #kPa, atmospheric pressure
-    d_atm = 1.225 #kg/m^3, atmospheric density
+    t_atm = 300                     #k, atmospheric temperature
+    p_atm = 101.3                   #kPa, atmospheric pressure
+    d_atm = 1.225                   #kg/m^3, atmospheric density
 
     # Fuel inputs
-    d_kerosene = 0.821 #kg/m^3
-    LHV_kerosene = 43.0 #MJ/kg
+    d_kerosene = 0.821              #kg/m^3, internet
+    LHV_kerosene = 43.0             #MJ/kg, internet
 
     # Combusion Efficiency
     # eff_combustion = 0.9
@@ -111,7 +108,10 @@ def calc():
     w_ta = m_air * (h_4a - h_5a)
     p_5 = p_4 * pressureRatio_turbine
 
-    # Nozzle
+    # Afterburner, S6 - S8
+    # Not used
+
+    # Nozzle exit plane, S9
     # Currently not calculating ideal case for simplicity
     # Perfect expansion assumption
     p_9 = p_0
