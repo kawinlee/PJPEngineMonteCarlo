@@ -122,18 +122,18 @@ def calc():
     # Thrust
     f_thrust = m_air * ((v_out - v_in) * 1000 / 3600)
     f_actual = m_air * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
-    print(f_thrust, f_actual)
+    #print(f_thrust, f_actual)
 
     # Output
     data = np.array([t_0, h_0, p_0, t_3i, h_3i, p_3, pr_3, w_ci, q_fuel_actual, t_4i, h_4i, pr_4i, t_5i, h_5i, pr_5i, w_ti, f_thrust])
-    data1 = np.array([t_3i, h_3i, w_ci, t_3a, h_3a, w_ca])
-    print(data1)
+    #data1 = np.array([t_3i, h_3i, w_ci, t_3a, h_3a, w_ca])
+    #print(data1)
     return data
 
 # Monte Carlo Simulations
 
 # Inputs
-num_runs = 1
+num_runs = 100
 
 # Tracking
 t3_data = np.zeros(shape = (num_runs))
