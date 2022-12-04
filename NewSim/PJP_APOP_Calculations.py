@@ -132,34 +132,50 @@ def calc():
 
 # Monte Carlo Simulations
 
-# Inputs
-num_runs = 100
+def monte_carlo(runs):
+    total_data = np.zeros(shape = (runs, len(calc()))) #initialize tracking data
+    data_row, data_col = total_data.shape
 
-# Tracking
-t3_data = np.zeros(shape = (num_runs))
-tracker_run_data = np.zeros(shape = (num_runs, len(calc())))
-data_row, data_col = tracker_run_data.shape
+    #runs
+    for i in range(runs): 
+        data = calc()
+        total_data[i] = data #assign run data to tracking data
 
-# Runs
-for i in range(num_runs):
-    data = calc()
-    tracker_run_data[i] = data
+    #average and standard deviation
+    output_mean = np.zeros(shape = (data_col))
+    output_sd = np.zeros(shape = (data_col))
+    for i in range(data_col):
+        output_mean[i] = np.mean(total_data[:, i])
+        output_sd[i] = np.std(total_data[:, i])
 
-# Averages
-output_mean = np.zeros(shape = (data_col))
-#a = tracker_run_data[:, 9]
+    return total_data, output_mean, output_sd
 
-for i in range(data_col):
-    a = tracker_run_data[:, i]
-    output_mean[i] = np.mean(a)
+# Plot Single Outputs from Monte Carlo Simulations
+def single_output_data(mc, datapoint):
+    total_data, output_mean, output_sd = mc
+    data = total_data[:, datapoint]
+    mean = output_mean[datapoint]
 
-# Plot output
+    plt.hist(data, bins = 20)
+    plt.axvline(mean, color='k', linestyle='dashed', linewidth=1)
 
-print(output_mean)
+    return plt.show()
 
-plt.xlim(0, num_runs)
-plt.plot(t3_data)
-plt.show()
+
+# Run Simulation
+
+#mc = monte_carlo(runs)
+#total_data, output_mean, output_sd = mc
+
+#Get Data
+
+#print(output_mean)
+#print(output_sd)
+
+#Produce Single Output Histogram
+#single_output_data(mc, datapoint)
+
+
 
 '''
  isentropic efficiency of compressor and turbine
@@ -176,10 +192,8 @@ plt.show()
 git fetch
 git reset --hard HEAD
 git merge origin/main
-
 commit 
 git add .
 git commit -m "<PUT MESSAGE HERE>"
 git push 
-
 '''
