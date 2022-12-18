@@ -40,6 +40,9 @@ def calc():
     eff_compressor = 0.75           #ESTIMATE as of 11.28.22
     eff_turbine = 0.75              #ESTIMATE as of 11.28.22
     m_air = 0.23                    #kg/s, jetcat data
+    EGT_lower = 753                 #K, jetcat data
+    EGT_upper = 993                 #K, jetcat data
+    works = False
 
     # Atmospheric condition inputs
     t_atm = 300                     #k, atmospheric temperature
@@ -49,9 +52,11 @@ def calc():
     # Fuel inputs
     d_kerosene = 0.821              #kg/m^3, internet
     LHV_kerosene = 43.0             #MJ/kg, internet
+    m_fuel = d_kerosene * maxFuelFlow / 1000 / 60   #kg/s, fuel mass flow rate
+    m_tot = m_air + m_fuel          # total mass flow
 
     # Combusion Efficiency
-    eff_combustion = 0.9
+    eff_combustion = 0.8
     # eff_combustion = np.random.normal(0.7, 0.1)
 
     # Atmosphere, S0
@@ -80,15 +85,15 @@ def calc():
 
     # Post combustor, S4
     # Energy provided by fuel (kJ)
-    m_fuel = d_kerosene * maxFuelFlow / 1000 / 60 #kg/s, fuel mass flow rate
+    
     q_fuel_ideal = m_fuel * LHV_kerosene * 1000 # kJ
     q_fuel_actual = eff_combustion * q_fuel_ideal #kJ
     # ideal
-    h_4i = (q_fuel_actual / m_air) + h_3i
+    h_4i = (q_fuel_actual / m_tot) + h_3i
     t_4i = table_interp(h_4i, h, t)
     pr_4i = table_interp(t_4i, t, p)
     # actual
-    h_4a = (q_fuel_actual / m_air) + h_3a
+    h_4a = (q_fuel_actual / m_tot) + h_3a
     t_4a = table_interp(h_4a, h, t)
     pr_4a = table_interp(t_4a, t, p)
     p_4 = p_3 * pressureRatio_combustor
@@ -104,7 +109,7 @@ def calc():
     pr_5a = pr_4a * pressureRatio_turbine #what is okstate "power balance"?
     t_5a = table_interp(pr_5a, p, t)
     h_5a = h_4a - eff_turbine * (h_4a - h_5i)
-    w_ta = m_air * (h_4a - h_5a)
+    w_ta = m_tot * (h_4a - h_5a)
     p_5 = p_4 * pressureRatio_turbine
 
     # Afterburner, S6 - S8
@@ -116,16 +121,19 @@ def calc():
     p_9 = p_0
     pr_9a = (p_9/p_5) * pr_5a #pressure ratio is the difference between p5 and p0
     h_9a = table_interp(pr_9a,p,h)
-    # v_9 = math.sqrt(2000 * (h_5a - h_9a))
+    v_9 = math.sqrt(2000 * (h_5a - h_9a))
+    t_9a = table_interp(pr_9a,p,t)
 
     # Thrust
-    f_thrust = m_air * ((v_out - v_in) * 1000 / 3600)
-    # f_actual = m_air * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
-    #print(f_thrust, f_actual)
+    f_thrust = m_tot * ((v_out - v_in) * 1000 / 3600)
+    f_actual = m_air * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
+    print(f_thrust, f_actual)
 
     # Output
     data = np.array([t_0, h_0, p_0, t_3i, h_3i, p_3, pr_3, w_ci, q_fuel_actual, t_4i, h_4i, pr_4i, t_5i, h_5i, pr_5i, w_ti, f_thrust])
-    print([t_0, t_3a, t_4a, t_5a])
+    if(t_9a > EGT_lower and t_9a < EGT_upper):
+        works = True
+    print([t_0, t_3a, t_4a, t_5a, t_9a, works])
     return data
 
 # Monte Carlo Simulations
