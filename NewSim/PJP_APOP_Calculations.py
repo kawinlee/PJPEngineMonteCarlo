@@ -79,13 +79,12 @@ def calc():
     h_3i = table_interp(t_3i, t, h)
     w_ci = m_air * (h_3i - h_0)
     # Non - isentropic
-    h_3a = h_0 + (h_3i - h_0)/eff_compressor #calculates h_3a "actual" enthalpy at S3
-    t_3a = table_interp(h_3a, h, t) #interps h_3a into temperature
-    w_ca = m_air * (h_3a - h_0) #calculates actual power req'd
+    h_3a = h_0 + (h_3i - h_0)/eff_compressor    #calculates h_3a "actual" enthalpy at S3
+    t_3a = table_interp(h_3a, h, t)             #interps h_3a into temperature
+    w_ca = m_air * (h_3a - h_0)                 #calculates actual power req'd
 
     # Post combustor, S4
-    # Energy provided by fuel (kJ)
-    
+    # Energy provided by fuel (kJ) 
     q_fuel_ideal = m_fuel * LHV_kerosene * 1000 # kJ
     q_fuel_actual = eff_combustion * q_fuel_ideal #kJ
     # ideal
@@ -95,7 +94,7 @@ def calc():
     # actual
     h_4a = (q_fuel_actual / m_tot) + h_3a
     t_4a = table_interp(h_4a, h, t)
-    pr_4a = table_interp(t_4a, t, p)
+    pr_4a = pressureRatio_combustor * table_interp(t_4a, t, p)
     p_4 = p_3 * pressureRatio_combustor
 
     # Post turbine, S5 
@@ -126,7 +125,7 @@ def calc():
 
     # Thrust
     f_thrust = m_tot * ((v_out - v_in) * 1000 / 3600)
-    f_actual = m_air * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
+    f_actual = m_tot * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
     print(f_thrust, f_actual)
     print(w_ca, w_ta)
     print(t_9a)
