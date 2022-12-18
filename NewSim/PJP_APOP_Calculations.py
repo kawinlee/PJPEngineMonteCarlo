@@ -128,12 +128,23 @@ def calc():
     f_thrust = m_tot * ((v_out - v_in) * 1000 / 3600)
     f_actual = m_air * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
     print(f_thrust, f_actual)
-
+    print(w_ca, w_ta)
+    print(t_9a)
+    
     # Output
-    data = np.array([t_0, h_0, p_0, t_3i, h_3i, p_3, pr_3, w_ci, q_fuel_actual, t_4i, h_4i, pr_4i, t_5i, h_5i, pr_5i, w_ti, f_thrust])
-    if(t_9a > EGT_lower and t_9a < EGT_upper):
-        works = True
-    print([t_0, t_3a, t_4a, t_5a, t_9a, works])
+    data = np.array([t_0, t_3a, t_4a, t_5a, t_9a])
+
+    #def not the most efficient way to do this
+    if (t_9a < EGT_lower or t_9a > EGT_upper) and w_ca > w_ta:
+        print("EGT out of bounds")
+        print("Work balance does not close")
+    elif w_ca > w_ta:
+        print("Work balance does not close")
+    elif t_9a < EGT_lower or t_9a > EGT_upper:
+        print("EGT out of bounds")
+    else:
+        works = True         
+
     return data
 
 # Monte Carlo Simulations
