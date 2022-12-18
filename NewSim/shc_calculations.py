@@ -13,7 +13,7 @@ gas_prop_array = np.loadtxt(gas_prop_csv, delimiter = ' ')
 
 # Match table column to data type
 t = 0 # temperature
-h = 1 # entropy
+h = 1 # enthalpy
 pr = 2 # relative pressure
 
 # Table interpolation function
@@ -84,41 +84,39 @@ def efficiency(press_comp, press_comb, press_turb, eff_comp, eff_comb, eff_turb)
 
     data[1] = np.array([t3_i, t3_a, h3_i, h3_a, p3, pr3, pr3])
 
-    # S4, Post combustor
-    m_fuel = d_fuel * flow_fuel #kg/s
-    q_fuel_i = m_fuel * LHV_fuel * 1000 # kJ
-    q_fuel_a = eff_comb * q_fuel_i
-
-    # To be checked
-
-    h4_i = (q_fuel_a / m_air) + h3_i
+    # Post combustor, S4
+    # Energy provided by fuel (kJ)
+    m_fuel = d_fuel * flow_fuel / 1000 / 60 #kg/s, fuel mass flow rate
+    q_fuel_ideal = m_fuel * LHV_fuel * 1000 # kJ
+    q_fuel_actual = eff_comb * q_fuel_ideal #kJ
+    # ideal
+    h4_i = (q_fuel_actual / m_air) + h3_i
     t4_i = interp(h4_i, h, t)
-    pr4_i = interp(h4_i, h, pr)
-
-    h4_a = (q_fuel_a / m_air) + h3_a
+    pr4_i = interp(t4_i, t, pr)
+    # actual
+    h4_a = (q_fuel_actual / m_air) + h3_a
     t4_a = interp(h4_a, h, t)
-    pr4_a = interp(h4_a, h, pr)
-
+    pr4_a = interp(t4_a, t, pr)
     p4 = p3 * press_comb
 
-    data[2] = np.array([t4_i, t4_a, h4_i, h4_a, p4, pr4_i, pr4_a])
-
-    # S5, Post turbine
-    pr5_i = pr4_i / press_turb #what is okstate "power balance"?
+    # Post turbine, S5 
+    # Isentropic (ideal) assumption
+    # Assume no pressure losses in combustor
+    pr5_i = pr4_i * press_turb #what is okstate "power balance"?
     t5_i = interp(pr5_i, pr, t)
     h5_i = interp(t5_i, t, h)
     w_ti = m_air * (h4_i - h5_i)
     # actual
-    pr5_a = pr4_a / press_turb #what is okstate "power balance"?
+    pr5_a = pr4_a * press_turb #what is okstate "power balance"?
+    t5_a = interp(pr5_a, pr, t)
     h5_a = h4_a - eff_turb * (h4_a - h5_i)
-    t5_a = interp(h5_a, h, t)
     w_ta = m_air * (h4_a - h5_a)
     p5 = p4 * press_turb
 
     # Incomplete
 
 
-    return t3_a, t4_a
+    return t0, t3_a, t4_a, t5_a
 
 
 print(efficiency(2.9, 0.8, 0.85, 0.8, 0.7, 0.75))
@@ -156,7 +154,6 @@ def k_interp(temp, type):
         return cp
     elif type == gamma_type:
         return cp / cv
-
 
 
 def efficiency2(press_comp, press_comb, press_turb, eff_comp, eff_comb, eff_turb):
@@ -216,13 +213,23 @@ def efficiency2(press_comp, press_comb, press_turb, eff_comp, eff_comb, eff_turb
     t4s = interp(h4s, h, t)
 
     h4a = (q_fuel_a / m_air) + interp(t3a, t, h)
-    t4a = (1 + (m_fuel / m_air) * LHV_fuel / (k_interp(t3a, 1) * t3a)) / (1 + (m_fuel / m_air))
+    t4a = interp(h4s, h, t)
 
     p4 = p3 * press_comb
 
     data[2] = np.array([t4s, t4a, p4, p4])
 
     # S5, Post turbine
+
+    t5a = t4a - (t3s - t0)
+
+
+
+
+
+
+
+
     #t5a = t4a - (t3s - t0)
     
 
@@ -232,7 +239,7 @@ def efficiency2(press_comp, press_comb, press_turb, eff_comp, eff_comb, eff_turb
 
     # Incomplete
 
-    return t0, t3a, t4a
+    return t0, t3a, t4a, t5a
 
 
 print(efficiency2(2.9, 0.8, 0.85, 0.8, 0.7, 0.75))

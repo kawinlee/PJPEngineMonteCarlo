@@ -4,7 +4,6 @@ import numpy as np
 import scipy as sc
 import math
 
-
 # Ideal Gas Properties Table
 gas_prop_table_csv = open('ideal_gas_prop.csv')
 gas_prop_table_array = np.loadtxt(gas_prop_table_csv, delimiter = ' ')
@@ -52,8 +51,8 @@ def calc():
     LHV_kerosene = 43.0             #MJ/kg, internet
 
     # Combusion Efficiency
-    # eff_combustion = 0.9
-    eff_combustion = np.random.normal(0.7, 0.1)
+    eff_combustion = 0.9
+    # eff_combustion = np.random.normal(0.7, 0.1)
 
     # Atmosphere, S0
     # temp and pressure at s1 (station 1), ideal gas assumption
@@ -97,12 +96,12 @@ def calc():
     # Post turbine, S5 
     # Isentropic (ideal) assumption
     # Assume no pressure losses in combustor
-    pr_5i = pr_4i / pressureRatio_turbine #what is okstate "power balance"?
+    pr_5i = pr_4i * pressureRatio_turbine #what is okstate "power balance"?
     t_5i = table_interp(pr_5i, p, t)
     h_5i = table_interp(t_5i, t, h)
     w_ti = m_air * (h_4i - h_5i)
     # actual
-    pr_5a = pr_4a / pressureRatio_turbine #what is okstate "power balance"?
+    pr_5a = pr_4a * pressureRatio_turbine #what is okstate "power balance"?
     t_5a = table_interp(pr_5a, p, t)
     h_5a = h_4a - eff_turbine * (h_4a - h_5i)
     w_ta = m_air * (h_4a - h_5a)
@@ -117,17 +116,16 @@ def calc():
     p_9 = p_0
     pr_9a = (p_9/p_5) * pr_5a #pressure ratio is the difference between p5 and p0
     h_9a = table_interp(pr_9a,p,h)
-    v_9 = math.sqrt(2000 * (h_5a - h_9a))
+    # v_9 = math.sqrt(2000 * (h_5a - h_9a))
 
     # Thrust
     f_thrust = m_air * ((v_out - v_in) * 1000 / 3600)
-    f_actual = m_air * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
-    print(f_thrust, f_actual)
+    # f_actual = m_air * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
+    #print(f_thrust, f_actual)
 
     # Output
     data = np.array([t_0, h_0, p_0, t_3i, h_3i, p_3, pr_3, w_ci, q_fuel_actual, t_4i, h_4i, pr_4i, t_5i, h_5i, pr_5i, w_ti, f_thrust])
-    data1 = np.array([t_3i, h_3i, w_ci, t_3a, h_3a, w_ca])
-    print(data1)
+    print([t_0, t_3a, t_4a, t_5a])
     return data
 
 # Monte Carlo Simulations
@@ -161,6 +159,7 @@ def single_output_data(mc, datapoint):
 
     return plt.show()
 
+calc()
 
 # Run Simulation
 
@@ -189,10 +188,8 @@ def single_output_data(mc, datapoint):
 
 
 '''
+Before editing code, do git fetch
 git fetch
-git reset --hard HEAD
-git merge origin/main
-commit 
 git add .
 git commit -m "<PUT MESSAGE HERE>"
 git push 
