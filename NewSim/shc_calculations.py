@@ -13,7 +13,7 @@ gas_prop_array = np.loadtxt(gas_prop_csv, delimiter = ' ')
 
 # Match table column to data type
 t = 0 # temperature
-h = 1 # entropy
+h = 1 # enthalpy
 pr = 2 # relative pressure
 
 # Table interpolation function
@@ -91,7 +91,7 @@ def efficiency(press_comp, press_comb, press_turb, eff_comp, eff_comb, eff_turb)
 
     # To be checked
 
-    h4_i = (q_fuel_a / m_air) + h3_i
+    h4_i = (q_fuel_i / m_air) + h3_i #changed this to q_fuel_i from q_fuel_a
     t4_i = interp(h4_i, h, t)
     pr4_i = interp(h4_i, h, pr)
 
