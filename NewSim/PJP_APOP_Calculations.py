@@ -36,9 +36,10 @@ def calc():
     v_out = 1560                    #km/hr, jetcat data
     pressureRatio_compressor = 2.9  #unitless, jetcat data
     pressureRatio_combustor = 0.93  #unitless, okstate data
-    pressureRatio_turbine = 0.64    #unitless, okstate data
-    eff_compressor = 0.75           #ESTIMATE as of 11.28.22
-    eff_turbine = 0.75              #ESTIMATE as of 11.28.22
+    pressureRatio_turbine = 0.55    #unitless, okstate data
+    eff_compressor = 0.675          #unitless, GTBA Average
+    eff_turbine = 0.725             #unitless, GTBA Average
+    eff_combustion = 0.925          #unitless, GTBA Average
     m_air = 0.23                    #kg/s, jetcat data
     EGT_lower = 753                 #K, jetcat data
     EGT_upper = 993                 #K, jetcat data
@@ -56,8 +57,7 @@ def calc():
     m_tot = m_air + m_fuel          # total mass flow
 
     # Combusion Efficiency
-    eff_combustion = 0.8
-    # eff_combustion = np.random.normal(0.7, 0.1)
+    
 
     # Atmosphere, S0
     # temp and pressure at s1 (station 1), ideal gas assumption
@@ -74,7 +74,7 @@ def calc():
     # Post compressor, S3
     # Isentropic Assumption
     p_3 = pressureRatio_compressor * p_0
-    pr_3 = pressureRatio_compressor * table_interp(t_0, t, p)
+    pr_3 = (p_3 / p_0) * table_interp(t_0, t, p)
     t_3i = table_interp(pr_3, p, t)
     h_3i = table_interp(t_3i, t, h)
     w_ci = m_air * (h_3i - h_0)
@@ -87,16 +87,17 @@ def calc():
     # Energy provided by fuel (kJ) 
     q_fuel_ideal = m_fuel * LHV_kerosene * 1000 # kJ
     q_fuel_actual = eff_combustion * q_fuel_ideal #kJ
+
+    p_4 = p_3 * pressureRatio_combustor
     # ideal
     h_4i = (q_fuel_actual / m_tot) + h_3i
     t_4i = table_interp(h_4i, h, t)
-    pr_4i = table_interp(t_4i, t, p)
+    pr_4i = (p_4 / p_3) * table_interp(t_4i, t, p)
     # actual
     h_4a = (q_fuel_actual / m_tot) + h_3a
     t_4a = table_interp(h_4a, h, t)
-    pr_4a = pressureRatio_combustor * table_interp(t_4a, t, p)
-    p_4 = p_3 * pressureRatio_combustor
-
+    pr_4a = table_interp(t_4a, t, p)
+    pr_4a = (p_4 / p_3) * table_interp(t_4a, t, p)
     # Post turbine, S5 
     # Isentropic (ideal) assumption
     # Assume no pressure losses in combustor
@@ -126,14 +127,14 @@ def calc():
     # Thrust
     f_thrust = m_tot * ((v_out - v_in) * 1000 / 3600)
     f_actual = m_tot * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
-    print(f_thrust, f_actual)
-    print(w_ca, w_ta)
-    print(t_9a)
+    print("Actual Thrust:", f_actual)
+    print("Comp work:", w_ca)
+    print("Turb work:", w_ta)
+    print("EGT:", t_9a)
     
     # Output
     data = np.array([t_0, t_3a, t_4a, t_5a, t_9a])
 
-    #def not the most efficient way to do this
     if (t_9a < EGT_lower or t_9a > EGT_upper) and w_ca > w_ta:
         print("EGT out of bounds")
         print("Work balance does not close")
@@ -142,7 +143,8 @@ def calc():
     elif t_9a < EGT_lower or t_9a > EGT_upper:
         print("EGT out of bounds")
     else:
-        works = True         
+        works = True 
+        print(works)        
 
     return data
 
