@@ -62,32 +62,27 @@ def k_interp(temp, type):
 def fuel_level(flow_fuel):
 
     # Turbine pressure ratio is calculated (w_turbine = w_compressor)
-    # Dependent on component efficiencies
-    eff_comp = 0.675
-    eff_comb = 0.925
-    eff_turb = 0.725
-    eff_nozz = 0.7
-    # Input variables               Unit        Source / notes
-    flow_fuel = flow_fuel/ 10**6 / 60     # m^3/s     Jetcat
-    v0 = 0                          # km/hr     Static test conditions
-    v_out = 1560                    # km/hr     Jetcat
-    m_air = 0.23                    # kg/s      Jetcat 
-    # Atmospheric condition input variables
-    t0 = 293.15                     # k         Test conditions
-    p0 = 101.3                      # kPa       Test conditions
-    d0 = 1.225                      # kg/m^3    Test conditions
+    # Input variables
+    # Component Efficiencies                Unit        Source / notes
+    eff_comp = 0.675                        # none      GTBA
+    eff_comb = 0.925                        # none      GTBA
+    eff_turb = 0.725                        # none      GTBA
+    eff_nozz = 0.7                          # none      estimate
+    flow_fuel = flow_fuel/ 10**6 / 60       # m^3/s     Jetcat
+    m_air = 0.23                            # kg/s      Jetcat 
+    # Atmospheric Conditions
+    t0 = 293.15                             # K         Test conditions
+    p0 = 101.3                              # kPa       Test conditions
     # Fuel inputs
-    d_fuel = 821                    # kg/m^3    Kerosene
-    LHV_fuel = 43.0 * 1000          # kJ/kg     Kerosene
+    d_fuel = 821                            # kg/m^3    Kerosene
+    LHV_fuel = 43.0 * 1000                  # kJ/kg     Kerosene
+    m_fuel = d_fuel * flow_fuel             # kg/s      calc
+    f = m_fuel / m_air                      # none      calc
+    m_tot = m_fuel + m_air                  # kg/s      calc
     # Known pressure ratios
-    press_comp = 2.9
-
-    m_fuel = d_fuel * flow_fuel     # kg/s
-    f = m_fuel / m_air
-    m_tot = m_fuel + m_air
-
-    p_comb = 0.97   # OK State
-
+    press_comp = 2.9                        # none      Jetcat
+    press_comb = 0.97                       # none      OK State
+    # Heat Capacities
     gamma_low = k_interp(t0, 2)
     cp_low = k_interp(t0, 1)
 
@@ -113,7 +108,7 @@ def fuel_level(flow_fuel):
 
     # S4, Post combustor
     t4a = (1 + (f * eff_comb * LHV_fuel)/(cp_low * t3a)) * t3a / (1 + f)
-    p4 = p_comb * p3
+    p4 = press_comb * p3
 
     gamma_high = k_interp(t4a, 2)
     cp_high = k_interp(t4a, 1)
