@@ -30,11 +30,8 @@ def interp(val, type_in, type_out):
     val_out = ratio * (table_out[i] - table_out[i - 1]) + table_out[i - 1] 
     return val_out
 
-
-
 spec_heat_csv = open('shc_air.csv')
 spec_heat_array = np.loadtxt(spec_heat_csv, delimiter = ' ')
-
 
 def k_interp(temp, type): 
     
@@ -62,13 +59,16 @@ def k_interp(temp, type):
         return cp / cv
 
 
-def shc_eff(eff_comp, eff_comb, eff_turb, eff_nozz):
+def fuel_level(flow_fuel):
 
     # Turbine pressure ratio is calculated (w_turbine = w_compressor)
     # Dependent on component efficiencies
-
+    eff_comp = 0.675
+    eff_comb = 0.925
+    eff_turb = 0.725
+    eff_nozz = 0.7
     # Input variables               Unit        Source / notes
-    flow_fuel = 390/ 10**6 / 60     # m^3/s     Jetcat
+    flow_fuel = flow_fuel/ 10**6 / 60     # m^3/s     Jetcat
     v0 = 0                          # km/hr     Static test conditions
     v_out = 1560                    # km/hr     Jetcat
     m_air = 0.23                    # kg/s      Jetcat 
@@ -82,7 +82,7 @@ def shc_eff(eff_comp, eff_comb, eff_turb, eff_nozz):
     # Known pressure ratios
     press_comp = 2.9
 
-    m_fuel = d_fuel * flow_fuel # kg/s
+    m_fuel = d_fuel * flow_fuel     # kg/s
     f = m_fuel / m_air
     m_tot = m_fuel + m_air
 
@@ -138,6 +138,15 @@ def shc_eff(eff_comp, eff_comb, eff_turb, eff_nozz):
     v9 = math.sqrt(2000 * cp_mid * t9a * (1 - ((p9static / p9) ** ((gamma_mid - 1) / gamma_mid))))
     thrust = m_tot * v9
 
-    return v9, thrust, t9a, p9
+    return thrust
 
-print(shc_eff(0.675, 0.925, 0.725, 1))
+# function iterates fuel flow to match thrust
+fuelFlow = 80
+desired_thrust = 2 #N
+measured_thrust = fuel_level(fuelFlow)
+
+while measured_thrust > desired_thrust:
+    fuelFlow = fuelFlow - 0.25
+    measured_thrust = fuel_level(fuelFlow)
+
+print(measured_thrust, fuelFlow)
