@@ -91,6 +91,11 @@ def shc_eff(eff_comp, eff_comb, eff_turb, eff_nozz):
     gamma_low = k_interp(t0, 2)
     cp_low = k_interp(t0, 1)
 
+    # S00, Generator
+    w_elec = 0.500              # kW
+    eff_gen = 0.5               # unitless estimate
+    w_shaft = w_elec / eff_gen  # Shaft power 
+
     # S0, Atmosphere
   
     # S1, Diffuser
