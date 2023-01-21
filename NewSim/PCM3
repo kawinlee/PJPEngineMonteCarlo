@@ -67,7 +67,7 @@ def fuel_level(flow_fuel):
     eff_comp = 0.675                        # none      GTBA
     eff_comb = 0.925                        # none      GTBA
     eff_turb = 0.725                        # none      GTBA
-    eff_nozz = 0.7                          # none      estimate
+    eff_nozz = 0.457831                     # none      
     flow_fuel = flow_fuel/ 10**6 / 60       # m^3/s     Jetcat
     m_air = 0.23                            # kg/s      Jetcat 
     # Atmospheric Conditions
@@ -83,13 +83,13 @@ def fuel_level(flow_fuel):
     press_comp = 2.9                        # none      Jetcat
     press_comb = 0.97                       # none      OK State
     # Heat Capacities
-    gamma_low = k_interp(t0, 2)
-    cp_low = k_interp(t0, 1)
+    gamma_low = k_interp(t0, 2)             # unitless
+    cp_low = k_interp(t0, 1)                # kJ/kgK
 
     # S00, Generator
-    w_elec = 0.500              # kW
-    eff_gen = 0.5               # unitless estimate
-    w_shaft = w_elec / eff_gen  # Shaft power 
+    w_elec = 0.500                          # kW
+    eff_gen = 0.5                           # unitless estimate
+    w_shaft = w_elec / eff_gen              # Shaft power 
 
     # S0, Atmosphere
   
@@ -135,13 +135,14 @@ def fuel_level(flow_fuel):
 
     return thrust
 
+print(fuel_level(80))
 # function iterates fuel flow to match thrust
-fuelFlow = 80
-desired_thrust = 2 #N
-measured_thrust = fuel_level(fuelFlow)
+#fuelFlow = 80
+#desired_thrust = 2 #N
+#measured_thrust = fuel_level(fuelFlow)
 
-while measured_thrust > desired_thrust:
-    fuelFlow = fuelFlow - 0.25
-    measured_thrust = fuel_level(fuelFlow)
-
-print(measured_thrust, fuelFlow)
+#while measured_thrust > desired_thrust:
+#    fuelFlow = fuelFlow - 0.25
+#    measured_thrust = fuel_level(fuelFlow)
+#
+#print(measured_thrust, fuelFlow)
