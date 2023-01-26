@@ -35,8 +35,8 @@ def calc():
     v_in = 0                        #km/hr, static test condition
     v_out = 1560                    #km/hr, jetcat data
     pressureRatio_compressor = 2.9  #unitless, jetcat data
-    pressureRatio_combustor = 0.93  #unitless, okstate data
-    pressureRatio_turbine = 0.55    #unitless, okstate data
+    pressureRatio_combustor = 0.97  #unitless, okstate data
+    #pressureRatio_turbine =        #unitless, okstate data
     eff_compressor = 0.675          #unitless, GTBA Average
     eff_turbine = 0.725             #unitless, GTBA Average
     eff_combustion = 0.925          #unitless, GTBA Average
@@ -53,7 +53,7 @@ def calc():
     # Fuel inputs
     d_kerosene = 0.821              #kg/m^3, internet
     LHV_kerosene = 43.0             #MJ/kg, internet
-    m_fuel = d_kerosene * maxFuelFlow / 1000 / 60   #kg/s, fuel mass flow rate
+    m_fuel = d_kerosene * (maxFuelFlow / 1000 / 60)   #kg/s, fuel mass flow rate
     m_tot = m_air + m_fuel          # total mass flow
 
     # Combusion Efficiency
@@ -97,21 +97,15 @@ def calc():
     h_4a = (q_fuel_actual / m_tot) + h_3a
     t_4a = table_interp(h_4a, h, t)
     pr_4a = table_interp(t_4a, t, p)
-    pr_4a = (p_4 / p_3) * table_interp(t_4a, t, p)
+    #pr_4a = (p_4 / p_3) * table_interp(t_4a, t, p)
     # Post turbine, S5 
-    # Isentropic (ideal) assumption
-    # Assume no pressure losses in combustor
-    pr_5i = pr_4i * pressureRatio_turbine #what is okstate "power balance"?
-    t_5i = table_interp(pr_5i, p, t)
-    h_5i = table_interp(t_5i, t, h)
-    w_ti = m_air * (h_4i - h_5i)
-    # actual
-    pr_5a = pr_4a * pressureRatio_turbine #what is okstate "power balance"?
-    t_5a = table_interp(pr_5a, p, t)
-    h_5a = h_4a - eff_turbine * (h_4a - h_5i)
-    w_ta = m_tot * (h_4a - h_5a)
-    p_5 = p_4 * pressureRatio_turbine
+    # condition w_c = w_t
+    h5a = h_4a - (w_ci / (m_tot * eff_turbine))
+    pr5a = table_interp(h5a,h,p)
+    pressureRatio_turbine = pr5a / pr_4a
+    p5 = pressureRatio_turbine * p_4
 
+    wta = m_tot * (h_4a - h5a)
     # Afterburner, S6 - S8
     # Not used
 
@@ -119,35 +113,36 @@ def calc():
     # Currently not calculating ideal case for simplicity
     # Perfect expansion assumption
     p_9 = p_0
-    pr_9a = (p_9/p_5) * pr_5a #pressure ratio is the difference between p5 and p0
-    h_9a = table_interp(pr_9a,p,h)
-    v_9 = math.sqrt(2000 * (h_5a - h_9a))
-    t_9a = table_interp(pr_9a,p,t)
+    pr9a = pressureRatio_turbine * pr5a
+    h_9a = table_interp(pr9a,p,h)
+    v_9 = math.sqrt(2000 * (h5a - h_9a))
+    t_9a = table_interp(pr9a,p,t)
 
     # Thrust
-    f_thrust = m_tot * ((v_out - v_in) * 1000 / 3600)
-    f_actual = m_tot * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
-    print("Actual Thrust:", f_actual)
-    print("Comp work:", w_ca)
-    print("Turb work:", w_ta)
-    print("EGT:", t_9a)
+    density = p_9 / (0.2871 * t_9a)
+    thrust = m_tot * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
+    # print("Actual Thrust:", f_actual)
+    # print("Comp work:", w_ca)
+    # print("Turb work:", wta)
+    # print("EGT:", t_9a)
     
     # Output
-    data = np.array([t_0, t_3a, t_4a, t_5a, t_9a])
 
-    if (t_9a < EGT_lower or t_9a > EGT_upper) and w_ca > w_ta:
-        print("EGT out of bounds")
-        print("Work balance does not close")
-    elif w_ca > w_ta:
-        print("Work balance does not close")
-    elif t_9a < EGT_lower or t_9a > EGT_upper:
-        print("EGT out of bounds")
-    else:
-        works = True 
-        print(works)        
 
-    return data
+    # if (t_9a < EGT_lower or t_9a > EGT_upper) and w_ca > wta:
+    #     print("EGT out of bounds")
+    #     print("Work balance does not close")
+    # elif w_ca > wta:
+    #     print("Work balance does not close")
+    # elif t_9a < EGT_lower or t_9a > EGT_upper:
+    #     print("EGT out of bounds")
+    # else:
+    #     works = True 
+    #     print(works)        
 
+    return h_3i, h_3a, thrust
+
+print(calc())
 # Monte Carlo Simulations
 
 def monte_carlo(runs):
@@ -179,7 +174,7 @@ def single_output_data(mc, datapoint):
 
     return plt.show()
 
-calc()
+
 
 # Run Simulation
 
