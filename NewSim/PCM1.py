@@ -31,7 +31,7 @@ def table_interp(val1, col_from, col_to):
 def calc():
 
     # Input variables
-    maxFuelFlow = 80               #ml/min, jetcat data
+    maxFuelFlow = 390               #ml/min, jetcat data
     v_in = 0                        #km/hr, static test condition
     v_out = 1560                    #km/hr, jetcat data
     pressureRatio_compressor = 2.9  #unitless, jetcat data
@@ -51,8 +51,8 @@ def calc():
     d_atm = 1.225                   #kg/m^3, atmospheric density
 
     # Fuel inputs
-    d_kerosene = 0.821              #kg/m^3, internet
-    LHV_kerosene = 43.0             #MJ/kg, internet
+    d_kerosene = 821                #kg/m^3, internet
+    LHV_kerosene = 43.0 * 1000      #kJ/kg, internet
     m_fuel = d_kerosene * (maxFuelFlow / 1000 / 60)   #kg/s, fuel mass flow rate
     m_tot = m_air + m_fuel          # total mass flow
 
@@ -83,7 +83,7 @@ def calc():
 
     # Post combustor, S4
     # Energy provided by fuel (kJ) 
-    q_fuel_ideal = m_fuel * LHV_kerosene * 1000 # kJ
+    q_fuel_ideal = m_fuel * LHV_kerosene # kJ
     q_fuel_actual = eff_combustion * q_fuel_ideal #kJ
     p_4 = p_3 * pressureRatio_combustor
     # ideal
@@ -97,7 +97,7 @@ def calc():
     #pr_4a = (p_4 / p_3) * table_interp(t_4a, t, p)
     # Post turbine, S5 
     # condition w_c = w_t
-    h5a = h_4a - (w_ci / (m_tot * eff_turbine))
+    h5a = h_4a - (wca / m_tot)
     pr5a = table_interp(h5a,h,p)
     pressureRatio_turbine = pr5a / pr_4a
     p5 = pressureRatio_turbine * p_4
@@ -110,14 +110,12 @@ def calc():
     # Currently not calculating ideal case for simplicity
     # Perfect expansion assumption
     p_9 = p_0
-    pr9a = pressureRatio_turbine * pr5a
-    h_9a = table_interp(pr9a,p,h)
-    v_9 = math.sqrt(2000 * (h5a - h_9a))
-    t_9a = table_interp(pr9a,p,t)
-
+    t_9a = 873
+    h_9a = table_interp(t_9a,t,h)
+    #v_9 = math.sqrt(2000 * (h5a - h_9a))
     # Thrust
     density = p_9 / (0.2871 * t_9a)
-    thrust = m_tot * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
+    #thrust = m_tot * (v_9 - (v_in * 1000 / 3600)) #in m/s, N
     # print("Actual Thrust:", f_actual)
     # print("Comp work:", w_ca)
     # print("Turb work:", wta)
@@ -137,7 +135,7 @@ def calc():
     #     works = True 
     #     print(works)        
 
-    return thrust
+    return 
 
 print(calc())
 # Monte Carlo Simulations
