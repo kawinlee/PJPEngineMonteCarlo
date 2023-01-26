@@ -67,7 +67,7 @@ def fuel_level(flow_fuel):
     eff_comp = 0.675                        # none      GTBA
     eff_comb = 0.925                        # none      GTBA
     eff_turb = 0.725                        # none      GTBA
-    eff_nozz = 0.457831                     # none      
+    eff_nozz = 1                            # none      
     flow_fuel = flow_fuel/ 10**6 / 60       # m^3/s     Jetcat
     m_air = 0.23                            # kg/s      Jetcat 
     # Atmospheric Conditions
@@ -101,21 +101,28 @@ def fuel_level(flow_fuel):
 
     # S3, Post compressor
     t3i = t0 * (press_comp ** ((gamma_low - 1) / gamma_low))
+
+    ##TEST t3a as original t3i
+    #t3a = t3i
+
     t3a = t0 + ((t3i - t0) / eff_comp)
+
+    #t3anew = t0 * (1 + (((press_comp ** ((gamma_low - 1) / gamma_low)) - 1) / eff_comp))
+
     p3 = press_comp * p0
 
-    w_comp = m_air * cp_low * (t3a - t0)
+    w_comp = m_air * cp_low * (t3i - t0)
 
     # S4, Post combustor
-    t4a = (1 + (f * eff_comb * LHV_fuel)/(cp_low * t3a)) * t3a / (1 + f)
+    t4a = (1 + (f * eff_comb * LHV_fuel) / (cp_low * t3a)) * t3a / (1 + f)
     p4 = press_comb * p3
 
     gamma_high = k_interp(t4a, 2)
     cp_high = k_interp(t4a, 1)
 
     # S5, Post turbine
-    t5a = t4a - (w_comp / (cp_high * m_tot))
-    t5i = t4a - (eff_turb * (t4a - t5a))
+    t5a = t4a - (w_comp / (cp_high * m_tot * eff_turb))
+    t5i = t4a - eff_turb * (t4a - t5a)
     p_turb = ((t5a / t4a) ** (gamma_high / (gamma_high - 1)))
     p5 = p_turb * p4
 
@@ -133,9 +140,59 @@ def fuel_level(flow_fuel):
     v9 = math.sqrt(2000 * cp_mid * t9a * (1 - ((p9static / p9) ** ((gamma_mid - 1) / gamma_mid))))
     thrust = m_tot * v9
 
-    return thrust
+    v9test2 = math.sqrt(2000 * cp_mid * (t9a - t0))
+    thrusttest2 = m_tot * v9test2
 
-print(fuel_level(80))
+
+    workBalComp = cp_low * (t3a - t0)
+    workBalTurb1 = (1 + f) * eff_turb * cp_high * (t4a - t5a)
+
+
+    gas_const_air = 0.28705 # kg / m^3
+
+    p9dynamic = p9 - p9static
+    d_air_9 = p9 / (gas_const_air * t9a)
+
+    v9test = math.sqrt(2000 * p9dynamic / d_air_9)
+
+    thrusttest = m_tot * v9test
+
+    temperatures = np.array([t0, t3a, t4a, t5a, t9a])
+    pressures = np.array([p0, p3, p4, p5, p9])
+
+    return w_comp, t9a, p9, thrust
+
+    '''
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    x_base = np.array([0, 3, 4, 5, 9])
+    plt.plot(x_base, temperatures, 'g-')
+    plt.title("Temperatures")
+    plt.xticks(np.arange(min(x_base), max(x_base) + 1, 1.0))
+    plt.xlabel("Station")
+    plt.ylabel("Temperature, K")
+    for i, v in enumerate(temperatures):
+        ax.text(i, v + 25, "%d" %v, ha="center")
+        plt.ylim(0, max(temperatures) + 100)
+    plt.show()
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    x_base = np.array([0, 3, 4, 5, 9])
+    plt.plot(x_base, pressures, 'g-')
+    plt.title("Pressures")
+    plt.xticks(np.arange(min(x_base), max(x_base) + 1, 1.0))
+    plt.xlabel("Station")
+    plt.ylabel("Pressures, K")
+    for i, v in enumerate(pressures):
+        ax.text(i, v + 25, "%d" %v, ha="center")
+        plt.ylim(0, max(pressures) + 100)
+    plt.show()
+    '''
+
+    
+
+print(fuel_level(390))
 # function iterates fuel flow to match thrust
 #fuelFlow = 80
 #desired_thrust = 2 #N
