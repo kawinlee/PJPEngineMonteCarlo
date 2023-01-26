@@ -101,17 +101,10 @@ def fuel_level(flow_fuel):
 
     # S3, Post compressor
     t3i = t0 * (press_comp ** ((gamma_low - 1) / gamma_low))
-
-    ##TEST t3a as original t3i
-    #t3a = t3i
-
-    t3a = t0 + ((t3i - t0) / eff_comp)
-
-    #t3anew = t0 * (1 + (((press_comp ** ((gamma_low - 1) / gamma_low)) - 1) / eff_comp))
-
     p3 = press_comp * p0
-
-    w_comp = m_air * cp_low * (t3i - t0)
+    w_comp_i = m_air * cp_low * (t3i - t0)
+    w_comp = w_comp_i / eff_comp
+    t3a = (w_comp / (m_air * cp_low)) + t0
 
     # S4, Post combustor
     t4a = (1 + (f * eff_comb * LHV_fuel) / (cp_low * t3a)) * t3a / (1 + f)
@@ -121,8 +114,8 @@ def fuel_level(flow_fuel):
     cp_high = k_interp(t4a, 1)
 
     # S5, Post turbine
-    t5a = t4a - (w_comp / (cp_high * m_tot * eff_turb))
-    t5i = t4a - eff_turb * (t4a - t5a)
+    t5a = t4a - (w_comp / (cp_high * m_tot))
+    t5i = t4a - (w_comp / (cp_high * m_tot * eff_turb))
     p_turb = ((t5a / t4a) ** (gamma_high / (gamma_high - 1)))
     p5 = p_turb * p4
 
@@ -138,23 +131,14 @@ def fuel_level(flow_fuel):
     gamma_mid = k_interp(t9a, 2)
 
     v9 = math.sqrt(2000 * cp_mid * t9a * (1 - ((p9static / p9) ** ((gamma_mid - 1) / gamma_mid))))
+    v9 = math.sqrt(2000 * interp(t))
     thrust = m_tot * v9
-
-    v9test2 = math.sqrt(2000 * cp_mid * (t9a - t0))
-    thrusttest2 = m_tot * v9test2
-
-
-    workBalComp = cp_low * (t3a - t0)
-    workBalTurb1 = (1 + f) * eff_turb * cp_high * (t4a - t5a)
 
 
     gas_const_air = 0.28705 # kg / m^3
-
     p9dynamic = p9 - p9static
     d_air_9 = p9 / (gas_const_air * t9a)
-
     v9test = math.sqrt(2000 * p9dynamic / d_air_9)
-
     thrusttest = m_tot * v9test
 
     stations = np.arange(0, 10, 1)
@@ -185,11 +169,12 @@ def fuel_level(flow_fuel):
     plt.grid()
     plt.show()
 
-    return w_comp, v9, v9test, v9test2, thrust
+    return w_comp, v9, v9test, thrust
 
 
 
 
+    return w_comp, t9a, p9, thrust
 
     '''
     fig = plt.figure()
