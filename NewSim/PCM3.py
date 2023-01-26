@@ -149,8 +149,8 @@ def fuel_level(flow_fuel):
     figTemp, ax = plt.subplots(figsize=(12,8))
     plt.plot(stations, temperatures)
     plt.xlabel("Station", size=12)
-    plt.ylabel("Temperatures", size=12)
-    plt.title("Temperatures", size=15)
+    plt.ylabel("Temperature (K)", size=12)
+    plt.title("Jet Engine Model Temperatures", size=15)
     for index in range(len(stations)):
       ax.text(stations[index] - 0.2, temperatures[index] + 20, int(temperatures[index]), size=12)
     plt.xticks(stations, size=12)
@@ -160,8 +160,8 @@ def fuel_level(flow_fuel):
     figPress, ax = plt.subplots(figsize=(12,8))
     plt.plot(stations, pressures)
     plt.xlabel("Station", size=12)
-    plt.ylabel("Pressures", size=12)
-    plt.title("Pressures", size=15)
+    plt.ylabel("Pressure (kPa)", size=12)
+    plt.title("Jet Engine Model Pressures", size=15)
     for index in range(len(stations)):
       ax.text(stations[index] - 0.2, pressures[index] + 4, int(pressures[index]), size=12)
     plt.xticks(stations, size=12)
@@ -171,41 +171,10 @@ def fuel_level(flow_fuel):
     return w_comp, v9, v9test, thrust
 
 
-
-
-    return w_comp, t9a, p9, thrust
-
-    '''
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    x_base = np.array([0, 3, 4, 5, 9])
-    plt.plot(x_base, temperatures, 'g-')
-    plt.title("Temperatures")
-    plt.xticks(np.arange(min(x_base), max(x_base) + 1, 1.0))
-    plt.xlabel("Station")
-    plt.ylabel("Temperature, K")
-    for i, v in enumerate(temperatures):
-        ax.text(i, v + 25, "%d" %v, ha="center")
-        plt.ylim(0, max(temperatures) + 100)
-    plt.show()
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    x_base = np.array([0, 3, 4, 5, 9])
-    plt.plot(x_base, pressures, 'g-')
-    plt.title("Pressures")
-    plt.xticks(np.arange(min(x_base), max(x_base) + 1, 1.0))
-    plt.xlabel("Station")
-    plt.ylabel("Pressures, K")
-    for i, v in enumerate(pressures):
-        ax.text(i, v + 25, "%d" %v, ha="center")
-        plt.ylim(0, max(pressures) + 100)
-    plt.show()
-    '''
-
-    
-
 print(fuel_level(390))
+
+
+
 # function iterates fuel flow to match thrust
 #fuelFlow = 80
 #desired_thrust = 2 #N

@@ -6,8 +6,8 @@ import math
 import random
 
 # Load ideal gas properties table
-gas_prop_csv = open('ideal_gas_prop.csv')
-gas_prop_array = np.loadtxt(gas_prop_csv, delimiter = ' ')
+gasPropCsv = open('ideal_gas_prop.csv')
+gasPropArray = np.loadtxt(gasPropCsv, delimiter = ' ')
 
 # Match table column to data type
 t = 0 # temperature
@@ -16,83 +16,84 @@ pr = 2 # relative pressure
 
 # Table interpolation function
 # Input value, input type and output type
-def interp(val, type_in, type_out): 
+def interp(val, typeIn, typeOut): 
     
     # Extract input and output type arrays from table
-    table_in = gas_prop_array[:, type_in]
-    table_out = gas_prop_array[:, type_out]
+    tableIn = gasPropArray[:, typeIn]
+    tableOut = gasPropArray[:, typeOut]
 
     # Get index of first value in input type array greater than input value
-    i = np.argmax(table_in >= val) 
+    i = np.argmax(tableIn >= val) 
 
     # Map input value onto output type array
-    ratio = (val - table_in[i - 1]) / (table_in[i] - table_in[i - 1])
-    val_out = ratio * (table_out[i] - table_out[i - 1]) + table_out[i - 1] 
+    ratio = (val - tableIn[i - 1]) / (tableIn[i] - tableIn[i - 1])
+    val_out = ratio * (tableOut[i] - tableOut[i - 1]) + tableOut[i - 1] 
     return val_out
 
-spec_heat_csv = open('shc_air.csv')
-spec_heat_array = np.loadtxt(spec_heat_csv, delimiter = ' ')
+specHeatCsv = open('shc_air.csv')
+specHeatArray = np.loadtxt(specHeatCsv, delimiter = ' ')
 
 def k_interp(temp, type): 
     
-    cp_type = 1
-    gamma_type = 2
+    cpType = 1
+    gammaType = 2
 
     # Extract input and output type arrays from table
-    table_temp = spec_heat_array[:, 0]
-    table_cp = spec_heat_array[:, 1]
-    table_cv = spec_heat_array[:, 2]
+    tableTemp = specHeatArray[:, 0]
+    tableCp = specHeatArray[:, 1]
+    tableCv = specHeatArray[:, 2]
 
     # Get index of first value in input type array greater than input value
-    i = np.argmax(table_temp >= temp)
+    i = np.argmax(tableTemp >= temp)
 
     # Map input value onto output type array
-    ratio = (temp - table_temp[i-1]) / (table_temp[i] - table_temp[i - 1])
+    ratio = (temp - tableTemp[i-1]) / (tableTemp[i] - tableTemp[i - 1])
 
-    cp = ratio * (table_cp[i] - table_cp[i - 1]) + table_cp[i - 1] 
-    cv = ratio * (table_cv[i] - table_cv[i - 1]) + table_cv[i - 1] 
+    cp = ratio * (tableCp[i] - tableCp[i - 1]) + tableCp[i - 1] 
+    cv = ratio * (tableCv[i] - tableCv[i - 1]) + tableCv[i - 1] 
 
     # Return selected output value
-    if type == cp_type:
+    if type == cpType:
         return cp
-    elif type == gamma_type:
+    elif type == gammaType:
         return cp / cv
 
 
-def fuel_level(flow_fuel, w_gen):
+def fuelLevel(flowFuel, wGen):
 
     # Turbine pressure ratio is calculated (w_turbine = w_compressor)
     # Input variables
     # Component Efficiencies                Unit        Source / notes
-    eff_comp = 0.675                        # none      GTBA
-    eff_comb = 0.925                        # none      GTBA
-    eff_turb = 0.725                        # none      GTBA
-    eff_nozz = 1                            # none      
-    flow_fuel = flow_fuel/ 10**6 / 60       # m^3/s     Jetcat
-    m_air = 0.23                            # kg/s      Jetcat 
+    effComp = 0.675                        # none      GTBA
+    effComb = 0.925                        # none      GTBA
+    effTurb = 0.725                        # none      GTBA
+    effNozz = 1                            # none      
+    flowFuel = flowFuel/ 10**6 / 60       # m^3/s     Jetcat
+    mAir = 0.23                            # kg/s      Jetcat 
     # Atmospheric Conditions
     t0 = 293.15                             # K         Test conditions
     p0 = 101.3                              # kPa       Test conditions
     # Fuel inputs
-    d_fuel = 821                            # kg/m^3    Kerosene
-    LHV_fuel = 43.0 * 1000                  # kJ/kg     Kerosene
-    m_fuel = d_fuel * flow_fuel             # kg/s      calc
-    f = m_fuel / m_air                      # none      calc
-    m_tot = m_fuel + m_air                  # kg/s      calc
+    dFuel = 821                            # kg/m^3    Kerosene
+    lhvFuel = 43.0 * 1000                  # kJ/kg     Kerosene
+    mFuel = dFuel * flowFuel             # kg/s      calc
+    f = mFuel / mAir                      # none      calc
+    mTot = mFuel + mAir                  # kg/s      calc
     # Known pressure ratios
-    press_comp = 2.9                        # none      Jetcat
-    press_comb = 0.97                       # none      OK State
+    pressComp = 2.9                        # none      Jetcat
+    pressComb = 0.97                       # none      OK State
     # Heat Capacities
-    gamma_low = k_interp(t0, 2)             # unitless
-    cp_low = k_interp(t0, 1)                # kJ/kgK
+    gammaLow = k_interp(t0, 2)             # unitless
+    cpLow = k_interp(t0, 1)                # kJ/kgK
 
     # S00, Generator
-    w_elec = 0.500                          # kW
-    eff_gen = 0.5                           # unitless estimate
-    w_shaft = w_elec / eff_gen              # Shaft power 
+    wElec = 0.500                          # kW
+    effGen = 0.5                           # unitless estimate
+    wShaft = wElec / effGen              # Shaft power 
 
     # S0, Atmosphere
-  
+    h0 = interp(t0, t, h)
+
     # S1, Diffuser
     # Same as S0
 
@@ -100,39 +101,80 @@ def fuel_level(flow_fuel, w_gen):
     # Same as S0
 
     # S3, Post compressor
-    t3i = t0 * (press_comp ** ((gamma_low - 1) / gamma_low))
+    p3 = pressComp * p0
 
-    ##TEST t3a as original t3i
-    #t3a = t3i
-
-    t3a = t0 + ((t3i - t0) / eff_comp)
-
-    #t3anew = t0 * (1 + (((press_comp ** ((gamma_low - 1) / gamma_low)) - 1) / eff_comp))
-
-    p3 = press_comp * p0
-
-    w_comp = m_air * cp_low * (t3i - t0)
+    t3i = t0 * (pressComp ** ((gammaLow - 1) / gammaLow))
+    h3i = interp(t3i, t, h)
+    
+    wCompi = mAir * (h3i - h0)
+    wCompa = wCompi / effComp
+    
+    h3a = (wCompa / mAir) + h0
+    t3a = interp(h3a, h, t)
 
     # S4, Post combustor
-    t4a = (1 + (f * eff_comb * LHV_fuel) / (cp_low * t3a)) * t3a / (1 + f)
-    p4 = press_comb * p3
+
+    qFueli = mFuel * lhvFuel
+    qFuela = qFueli * effComb
+
+    h4a = (qFuela / mTot) + (h3a / (1 + f))
+    t4a = interp(h4a, h, t)
+    p4 = pressComb * p3
+
+    gammaHigh = k_interp(t4a, 2)
+
+    # S5, Post turbine
+    h5a = h4a - (wCompa / (mTot * effTurb))
+    t5a = interp(h5a, h, t)
+
+    pTurb = ((t5a / t4a) ** (gammaHigh / (gammaHigh - 1)))
+
+    p5 = pTurb * p4
+
+    # S6 - S7, Afterburner
+    # Not used
+
+    # S8, Nozzle exit plane
+    p8 = p5
+    t8a = t5a
+    h8a = h5a
+
+    # S9, Exit
+    h9a = h0
+    
+    v9 = math.sqrt(2000 * (h8a - h9a))
+    thrust = mTot * v9
+
+    return p0, p3, p4, p5, p8
+    #return h0, h3a, h4a, h5a, h8a, h9a
+
+print(fuelLevel(390, 0))
+
+'''ss_comb * p3
 
     gamma_high = k_interp(t4a, 2)
     cp_high = k_interp(t4a, 1)
 
 
-    '''NEW'''
+  
 
     #w_comp = m_air * cp_low * (t3i - t0)
 
-    lhs = w_comp + w_gen
+    #lhs = (w_comp / m_air) + (w_gen / m_tot)
+    #rhs = (1 + f) * cp_high (t4a - t5a)
 
-    rhs = 
+    fNew = 1 + eff_turb * (1 + (w_gen / w_comp))
+
+
+
+
+
+
+
+    # m_tot * (1 + f) * cp * (t4 - t5)
 
 
     
-
-
     t4a = (1 + (f * eff_comb * LHV_fuel) / (cp_low * t3a)) * t3a / (1 + f)
     t5a = t4a - (w_comp / (cp_high * m_tot * eff_turb))
     t5i = t4a - eff_turb * (t4a - t5a)
@@ -140,11 +182,6 @@ def fuel_level(flow_fuel, w_gen):
 
 
 
-
-
-
-
-    '''NEW'''
 
 
     # S5, Post turbine
@@ -189,7 +226,16 @@ def fuel_level(flow_fuel, w_gen):
 
     return w_comp, t9a, p9, thrust
 
-    '''
+'''
+
+
+
+
+
+
+
+
+'''
     fig = plt.figure()
     ax = fig.add_subplot(111)
     x_base = np.array([0, 3, 4, 5, 9])
@@ -215,11 +261,13 @@ def fuel_level(flow_fuel, w_gen):
         ax.text(i, v + 25, "%d" %v, ha="center")
         plt.ylim(0, max(pressures) + 100)
     plt.show()
-    '''
+
 
     
 
 print(fuel_level(390))
+'''
+
 # function iterates fuel flow to match thrust
 #fuelFlow = 80
 #desired_thrust = 2 #N
