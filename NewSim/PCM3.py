@@ -131,7 +131,6 @@ def fuel_level(flow_fuel):
     gamma_mid = k_interp(t9a, 2)
 
     v9 = math.sqrt(2000 * cp_mid * t9a * (1 - ((p9static / p9) ** ((gamma_mid - 1) / gamma_mid))))
-    v9 = math.sqrt(2000 * interp(t))
     thrust = m_tot * v9
 
 
