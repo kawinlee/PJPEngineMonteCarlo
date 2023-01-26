@@ -59,7 +59,7 @@ def k_interp(temp, type):
         return cp / cv
 
 
-def fuel_level(flow_fuel):
+def fuel_level(flow_fuel, w_gen):
 
     # Turbine pressure ratio is calculated (w_turbine = w_compressor)
     # Input variables
@@ -120,6 +120,33 @@ def fuel_level(flow_fuel):
     gamma_high = k_interp(t4a, 2)
     cp_high = k_interp(t4a, 1)
 
+
+    '''NEW'''
+
+    #w_comp = m_air * cp_low * (t3i - t0)
+
+    lhs = w_comp + w_gen
+
+    rhs = 
+
+
+    
+
+
+    t4a = (1 + (f * eff_comb * LHV_fuel) / (cp_low * t3a)) * t3a / (1 + f)
+    t5a = t4a - (w_comp / (cp_high * m_tot * eff_turb))
+    t5i = t4a - eff_turb * (t4a - t5a)
+
+
+
+
+
+
+
+
+    '''NEW'''
+
+
     # S5, Post turbine
     t5a = t4a - (w_comp / (cp_high * m_tot * eff_turb))
     t5i = t4a - eff_turb * (t4a - t5a)
@@ -157,39 +184,10 @@ def fuel_level(flow_fuel):
 
     thrusttest = m_tot * v9test
 
-    stations = np.arange(0, 10, 1)
-    temperatures = np.array([t0, t0, t0, t3a, t4a, t5a, t5a, t5a, t9a, t0])
-    pressures = np.array([p0, p0, p0, p3, p4, p5, p5, p5, p9, p0])
+    temperatures = np.array([t0, t3a, t4a, t5a, t9a])
+    pressures = np.array([p0, p3, p4, p5, p9])
 
-    # Temperature and Pressure Plotting
-
-    figTemp, ax = plt.subplots(figsize=(12,8))
-    plt.plot(stations, temperatures)
-    plt.xlabel("Station", size=12)
-    plt.ylabel("Temperatures", size=12)
-    plt.title("Temperatures", size=15)
-    for index in range(len(stations)):
-      ax.text(stations[index] - 0.2, temperatures[index] + 20, int(temperatures[index]), size=12)
-    plt.xticks(stations, size=12)
-    plt.grid()
-    plt.show()
-
-    figPress, ax = plt.subplots(figsize=(12,8))
-    plt.plot(stations, pressures)
-    plt.xlabel("Station", size=12)
-    plt.ylabel("Pressures", size=12)
-    plt.title("Pressures", size=15)
-    for index in range(len(stations)):
-      ax.text(stations[index] - 0.2, pressures[index] + 4, int(pressures[index]), size=12)
-    plt.xticks(stations, size=12)
-    plt.grid()
-    plt.show()
-
-    return w_comp, v9, v9test, v9test2, thrust
-
-
-
-
+    return w_comp, t9a, p9, thrust
 
     '''
     fig = plt.figure()
