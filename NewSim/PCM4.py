@@ -33,8 +33,11 @@ def interp(val, typeIn, typeOut):
 specHeatCsv = open('shc_air.csv')
 specHeatArray = np.loadtxt(specHeatCsv, delimiter = ' ')
 
+# Cp and Gamma interpolation function
+# Input temperature value, output type (cp: 1, gamma: 2)
 def k_interp(temp, type): 
     
+    # Assign value to cp and gamma types
     cpType = 1
     gammaType = 2
 
@@ -59,37 +62,35 @@ def k_interp(temp, type):
         return cp / cv
 
 
-def fuelLevel(flowFuel, wGen):
+def fuelLevel(flowFuel, wElec, effGen):
 
     # Turbine pressure ratio is calculated (w_turbine = w_compressor)
     # Input variables
     # Component Efficiencies                Unit        Source / notes
-    effComp = 0.675                        # none      GTBA
-    effComb = 0.925                        # none      GTBA
-    effTurb = 0.725                        # none      GTBA
-    effNozz = 1                            # none      
-    flowFuel = flowFuel/ 10**6 / 60       # m^3/s     Jetcat
-    mAir = 0.23                            # kg/s      Jetcat 
+    effComp = 0.675                         # none      GTBA
+    effComb = 0.925                         # none      GTBA
+    effTurb = 0.725                         # none      GTBA
+    effNozz = 1                             # none      
+    flowFuel = flowFuel/ 10**6 / 60         # m^3/s     Jetcat
+    mAir = 0.23                             # kg/s      Jetcat 
     # Atmospheric Conditions
     t0 = 293.15                             # K         Test conditions
     p0 = 101.3                              # kPa       Test conditions
     # Fuel inputs
-    dFuel = 821                            # kg/m^3    Kerosene
-    lhvFuel = 43.0 * 1000                  # kJ/kg     Kerosene
-    mFuel = dFuel * flowFuel             # kg/s      calc
-    f = mFuel / mAir                      # none      calc
-    mTot = mFuel + mAir                  # kg/s      calc
+    dFuel = 821                             # kg/m^3    Kerosene
+    lhvFuel = 43.0 * 1000                   # kJ/kg     Kerosene
+    mFuel = dFuel * flowFuel                # kg/s      calc
+    f = mFuel / mAir                        # none      calc
+    mTot = mFuel + mAir                     # kg/s      calc
     # Known pressure ratios
-    pressComp = 2.9                        # none      Jetcat
-    pressComb = 0.97                       # none      OK State
+    pressComp = 2.9                         # none      Jetcat
+    pressComb = 0.97                        # none      OK State
     # Heat Capacities
-    gammaLow = k_interp(t0, 2)             # unitless
-    cpLow = k_interp(t0, 1)                # kJ/kgK
+    gammaLow = k_interp(t0, 2)              # unitless
+    cpLow = k_interp(t0, 1)                 # kJ/kgK
 
     # S00, Generator
-    wElec = 0.500                          # kW
-    effGen = 0.5                           # unitless estimate
-    wShaft = wElec / effGen              # Shaft power 
+    wShaft = wElec / effGen                 # Shaft power 
 
     # S0, Atmosphere
     h0 = interp(t0, t, h)
@@ -107,13 +108,12 @@ def fuelLevel(flowFuel, wGen):
     h3i = interp(t3i, t, h)
     
     wCompi = mAir * (h3i - h0)
-    wCompa = wCompi / effComp
+    wCompa = wCompi / effComp + wShaft
     
     h3a = (wCompa / mAir) + h0
     t3a = interp(h3a, h, t)
 
     # S4, Post combustor
-
     qFueli = mFuel * lhvFuel
     qFuela = qFueli * effComb
 
@@ -141,8 +141,6 @@ def fuelLevel(flowFuel, wGen):
 
     # S9, Exit
     h9a = h0
-    
-    #v9 = math.sqrt(2000 * (h8a - h9a))
 
     cp_mid = k_interp(t8a, 1)
     gamma_mid = k_interp(t8a, 2)
@@ -150,15 +148,11 @@ def fuelLevel(flowFuel, wGen):
     v9 = math.sqrt(2000 * cp_mid * t8a * (1 - ((p0 / p8) ** ((gamma_mid - 1) / gamma_mid))))
     thrust = mTot * v9
 
-
-
-
     # Temperature and Pressure Plotting
-
+    '''
     stations = np.arange(0, 6, 1)
     temperatures = np.array([t0, t0, t3a, t4a, t5a, t8a])
     pressures = np.array([p0, p0, p3, p4, p5, p8])
-
 
     figTemp, ax = plt.subplots(figsize=(12,6))
     plt.plot(stations, temperatures)
@@ -181,139 +175,36 @@ def fuelLevel(flowFuel, wGen):
     plt.xticks(stations, size=12)
     plt.grid()
     plt.show()
+    '''
+
+    return thrust
+
+print(fuelLevel(339.98, 0, 1))
 
 
-    #return p0, p3, p4, p5, p8, t0, t3a, t4a, t5a, t8a
-    #return h0, h3a, h4a, h5a, h8a, h9a
-    return v9, thrust
+# Plot fuelLevel
 
-print(fuelLevel(390, 0))
+def plotFuelLevel(wElec, effGen):
+    fuelRange = np.arange(200, 390, 1)
+    thrustValues = np.zeros(len(fuelRange))
 
-'''ss_comb * p3
+    for i in range(len(fuelRange)):
+        thrustValues[i] = fuelLevel(fuelRange[i], wElec, effGen)
 
-    gamma_high = k_interp(t4a, 2)
-    cp_high = k_interp(t4a, 1)
-
-
-  
-
-    #w_comp = m_air * cp_low * (t3i - t0)
-
-    #lhs = (w_comp / m_air) + (w_gen / m_tot)
-    #rhs = (1 + f) * cp_high (t4a - t5a)
-
-    fNew = 1 + eff_turb * (1 + (w_gen / w_comp))
-
-
-
-
-
-
-
-    # m_tot * (1 + f) * cp * (t4 - t5)
-
-
-    
-    t4a = (1 + (f * eff_comb * LHV_fuel) / (cp_low * t3a)) * t3a / (1 + f)
-    t5a = t4a - (w_comp / (cp_high * m_tot * eff_turb))
-    t5i = t4a - eff_turb * (t4a - t5a)
-
-
-
-
-
-
-    # S5, Post turbine
-    t5a = t4a - (w_comp / (cp_high * m_tot * eff_turb))
-    t5i = t4a - eff_turb * (t4a - t5a)
-    p_turb = ((t5a / t4a) ** (gamma_high / (gamma_high - 1)))
-    p5 = p_turb * p4
-
-    # S6 - S8, Afterburner
-    # Not used
-
-    # S9, Nozzle exit plane
-    t9a = eff_nozz * t5a
-    p9 = p5
-    p9static = p0
-
-    cp_mid = k_interp(t9a, 1)
-    gamma_mid = k_interp(t9a, 2)
-
-    v9 = math.sqrt(2000 * cp_mid * t9a * (1 - ((p9static / p9) ** ((gamma_mid - 1) / gamma_mid))))
-    thrust = m_tot * v9
-
-    v9test2 = math.sqrt(2000 * cp_mid * (t9a - t0))
-    thrusttest2 = m_tot * v9test2
-
-
-    workBalComp = cp_low * (t3a - t0)
-    workBalTurb1 = (1 + f) * eff_turb * cp_high * (t4a - t5a)
-
-
-    gas_const_air = 0.28705 # kg / m^3
-
-    p9dynamic = p9 - p9static
-    d_air_9 = p9 / (gas_const_air * t9a)
-
-    v9test = math.sqrt(2000 * p9dynamic / d_air_9)
-
-    thrusttest = m_tot * v9test
-
-    temperatures = np.array([t0, t3a, t4a, t5a, t9a])
-    pressures = np.array([p0, p3, p4, p5, p9])
-
-    return w_comp, t9a, p9, thrust
-
-'''
-
-
-
-
-
-
-
-
-'''
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    x_base = np.array([0, 3, 4, 5, 9])
-    plt.plot(x_base, temperatures, 'g-')
-    plt.title("Temperatures")
-    plt.xticks(np.arange(min(x_base), max(x_base) + 1, 1.0))
-    plt.xlabel("Station")
-    plt.ylabel("Temperature, K")
-    for i, v in enumerate(temperatures):
-        ax.text(i, v + 25, "%d" %v, ha="center")
-        plt.ylim(0, max(temperatures) + 100)
+    figTemp, ax = plt.subplots(figsize=(12,6))
+    plt.plot(fuelRange, thrustValues, color = 'b')
+    plt.axhline(y= 100, color = 'r')
+    plt.xlabel("Fuel Input (ml/min)", size=12)
+    plt.ylabel("Thrust Output (N)", size=12)
+    plt.title("Jet Engine Model Thrust Output at %1.2f kW Electrical Output" % wElec, size=15)
+    #plt.xticks(stations, size=12)
+    plt.grid()
     plt.show()
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    x_base = np.array([0, 3, 4, 5, 9])
-    plt.plot(x_base, pressures, 'g-')
-    plt.title("Pressures")
-    plt.xticks(np.arange(min(x_base), max(x_base) + 1, 1.0))
-    plt.xlabel("Station")
-    plt.ylabel("Pressures, K")
-    for i, v in enumerate(pressures):
-        ax.text(i, v + 25, "%d" %v, ha="center")
-        plt.ylim(0, max(pressures) + 100)
-    plt.show()
+#print(plotFuelLevel(0, 1))
+#print(plotFuelLevel(0.5, 0.5))
 
 
-    
 
-print(fuel_level(390))
-'''
-
-# function iterates fuel flow to match thrust
-#fuelFlow = 80
-#desired_thrust = 2 #N
-#measured_thrust = fuel_level(fuelFlow)
-
-#while measured_thrust > desired_thrust:
-#    fuelFlow = fuelFlow - 0.25
-#    measured_thrust = fuel_level(fuelFlow)
-#
-#print(measured_thrust, fuelFlow)
+# At wElec = 0.0, effGen = 1.0, fuelFlow = 339.98 for 100 N thrust output (100.000919)
+# At wElec = 0.5, effGen = 0.5, fuelFlow = 349.38 for 100 N thrust output (100.000352)
