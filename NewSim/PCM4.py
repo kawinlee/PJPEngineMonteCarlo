@@ -142,11 +142,50 @@ def fuelLevel(flowFuel, wGen):
     # S9, Exit
     h9a = h0
     
-    v9 = math.sqrt(2000 * (h8a - h9a))
+    #v9 = math.sqrt(2000 * (h8a - h9a))
+
+    cp_mid = k_interp(t8a, 1)
+    gamma_mid = k_interp(t8a, 2)
+
+    v9 = math.sqrt(2000 * cp_mid * t8a * (1 - ((p0 / p8) ** ((gamma_mid - 1) / gamma_mid))))
     thrust = mTot * v9
 
-    return p0, p3, p4, p5, p8
+
+
+
+    # Temperature and Pressure Plotting
+
+    stations = np.arange(0, 6, 1)
+    temperatures = np.array([t0, t0, t3a, t4a, t5a, t8a])
+    pressures = np.array([p0, p0, p3, p4, p5, p8])
+
+
+    figTemp, ax = plt.subplots(figsize=(12,6))
+    plt.plot(stations, temperatures)
+    plt.xlabel("Station", size=12)
+    plt.ylabel("Temperature (K)", size=12)
+    plt.title("Jet Engine Model Temperatures", size=15)
+    for index in range(len(stations)):
+      ax.text(stations[index] - 0.2, temperatures[index] + 20, int(temperatures[index]), size=12)
+    plt.xticks(stations, size=12)
+    plt.grid()
+    plt.show()
+
+    figPress, ax = plt.subplots(figsize=(12,8))
+    plt.plot(stations, pressures)
+    plt.xlabel("Station", size=12)
+    plt.ylabel("Pressure (kPa)", size=12)
+    plt.title("Jet Engine Model Pressures", size=15)
+    for index in range(len(stations)):
+      ax.text(stations[index] - 0.2, pressures[index] + 4, int(pressures[index]), size=12)
+    plt.xticks(stations, size=12)
+    plt.grid()
+    plt.show()
+
+
+    #return p0, p3, p4, p5, p8, t0, t3a, t4a, t5a, t8a
     #return h0, h3a, h4a, h5a, h8a, h9a
+    return v9, thrust
 
 print(fuelLevel(390, 0))
 
